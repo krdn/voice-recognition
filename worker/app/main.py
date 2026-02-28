@@ -25,7 +25,7 @@ async def publish_status(r: redis.Redis, note_id: str, status: str, progress: in
 
 def update_note_status(note_id: str, status: str):
     """노트 상태 업데이트 SQL"""
-    return text("UPDATE notes SET status = :status WHERE id = :note_id::uuid").bindparams(
+    return text("UPDATE notes SET status = :status WHERE id = CAST(:note_id AS uuid)").bindparams(
         status=status, note_id=note_id
     )
 
@@ -53,7 +53,7 @@ async def process_job(r: redis.Redis, job_data: dict):
             await db.execute(
                 text("""
                     INSERT INTO transcripts (id, note_id, segments, full_text, search_vector, created_at, updated_at)
-                    VALUES (gen_random_uuid(), :note_id, :segments, :full_text,
+                    VALUES (gen_random_uuid(), CAST(:note_id AS uuid), :segments, :full_text,
                             to_tsvector('simple', :full_text), now(), now())
                 """),
                 {
@@ -67,7 +67,7 @@ async def process_job(r: redis.Redis, job_data: dict):
             await db.execute(
                 text("""
                     UPDATE notes SET language = :language, status = 'analyzing'
-                    WHERE id = :note_id::uuid
+                    WHERE id = CAST(:note_id AS uuid)
                 """),
                 {"language": stt_result["language"], "note_id": note_id},
             )
@@ -83,7 +83,7 @@ async def process_job(r: redis.Redis, job_data: dict):
             await db.execute(
                 text("""
                     INSERT INTO analyses (id, note_id, summary, topics, keywords, action_items, created_at, updated_at)
-                    VALUES (gen_random_uuid(), :note_id, :summary, :topics, :keywords, :action_items, now(), now())
+                    VALUES (gen_random_uuid(), CAST(:note_id AS uuid), :summary, :topics, :keywords, :action_items, now(), now())
                 """),
                 {
                     "note_id": note_id,
@@ -95,7 +95,7 @@ async def process_job(r: redis.Redis, job_data: dict):
             )
 
             await db.execute(
-                text("UPDATE notes SET status = 'completed' WHERE id = :note_id::uuid"),
+                text("UPDATE notes SET status = 'completed' WHERE id = CAST(:note_id AS uuid)"),
                 {"note_id": note_id},
             )
             await db.commit()
@@ -107,7 +107,7 @@ async def process_job(r: redis.Redis, job_data: dict):
         logger.error(f"작업 실패: note_id={note_id}, error={e}")
         async with async_session() as db:
             await db.execute(
-                text("UPDATE notes SET status = 'failed' WHERE id = :note_id::uuid"),
+                text("UPDATE notes SET status = 'failed' WHERE id = CAST(:note_id AS uuid)"),
                 {"note_id": note_id},
             )
             await db.commit()
