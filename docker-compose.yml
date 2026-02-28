@@ -2,12 +2,13 @@ services:
   voice-postgres:
     image: postgres:16-alpine
     container_name: voice-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-voice_recognition}
       POSTGRES_USER: ${POSTGRES_USER:-voice}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voice_secret}
     ports:
-      - "5435:5432"
+      - "${POSTGRES_PORT:-5437}:5432"
     volumes:
       - voice_postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -20,8 +21,9 @@ services:
   voice-redis:
     image: redis:7-alpine
     container_name: voice-redis
+    restart: unless-stopped
     ports:
-      - "6382:6379"
+      - "${REDIS_PORT:-6382}:6379"
     volumes:
       - voice_redis_data:/data
     healthcheck:
@@ -35,6 +37,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: voice-api
+    restart: unless-stopped
     ports:
       - "8200:8000"
     environment:
@@ -55,12 +58,15 @@ services:
       context: ./worker
       dockerfile: Dockerfile
     container_name: voice-worker
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-voice}:${POSTGRES_PASSWORD:-voice_secret}@voice-postgres:5432/${POSTGRES_DB:-voice_recognition}
       REDIS_URL: redis://voice-redis:6379/0
       UPLOAD_DIR: /app/uploads
-      OLLAMA_URL: http://voice-ollama:11434
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
       HF_TOKEN: ${HF_TOKEN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./uploads:/app/uploads
       - whisperx_cache:/root/.cache
@@ -77,26 +83,12 @@ services:
               count: 1
               capabilities: [gpu]
 
-  voice-ollama:
-    image: ollama/ollama:latest
-    container_name: voice-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
   voice-frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: voice-frontend
+    restart: unless-stopped
     ports:
       - "3200:3000"
     environment:
@@ -108,5 +100,4 @@ services:
 volumes:
   voice_postgres_data:
   voice_redis_data:
-  ollama_data:
   whisperx_cache:

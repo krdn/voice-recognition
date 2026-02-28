@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://voice:voice_secret@localhost:5435/voice_recognition"
+    database_url: str = "postgresql+asyncpg://voice:voice_secret@localhost:5437/voice_recognition"
     redis_url: str = "redis://localhost:6382/0"
     upload_dir: str = "./uploads"
     ollama_url: str = "http://localhost:11434"
