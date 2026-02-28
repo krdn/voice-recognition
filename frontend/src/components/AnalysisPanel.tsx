@@ -1,10 +1,16 @@
 "use client";
 
+interface ActionItem {
+  text: string;
+  assignee?: string | null;
+  deadline?: string | null;
+}
+
 interface AnalysisPanelProps {
   summary: string | null;
   topics: string[];
   keywords: string[];
-  actionItems: string[];
+  actionItems: (string | ActionItem)[];
 }
 
 export default function AnalysisPanel({
@@ -129,15 +135,24 @@ export default function AnalysisPanel({
             액션 아이템
           </h3>
           <ul className="space-y-2">
-            {actionItems.map((item, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2 text-sm text-gray-400"
-              >
-                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                {item}
-              </li>
-            ))}
+            {actionItems.map((item, i) => {
+              const text = typeof item === "string" ? item : item.text;
+              const assignee = typeof item === "object" ? item.assignee : null;
+              const deadline = typeof item === "object" ? item.deadline : null;
+              return (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-gray-400"
+                >
+                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  <span>
+                    {text}
+                    {assignee && <span className="text-xs text-gray-500 ml-2">@{assignee}</span>}
+                    {deadline && <span className="text-xs text-gray-500 ml-2">{deadline}</span>}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

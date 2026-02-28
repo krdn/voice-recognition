@@ -36,7 +36,7 @@ interface Analysis {
   summary: string | null;
   topics: string[];
   keywords: string[];
-  action_items: string[];
+  action_items: (string | { text: string; assignee?: string | null; deadline?: string | null })[];
 }
 
 type Tab = "transcript" | "analysis";

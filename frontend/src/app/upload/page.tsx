@@ -6,7 +6,10 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import FileUploader from "@/components/FileUploader";
+import AudioRecorder from "@/components/AudioRecorder";
 import { useWebSocket } from "@/hooks/useWebSocket";
+
+type InputTab = "file" | "record";
 
 interface Project {
   id: string;
@@ -27,6 +30,7 @@ export default function UploadPage() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [activeTab, setActiveTab] = useState<InputTab>("file");
 
   const { status, progress } = useWebSocket({
     noteId: uploadedNoteId,
@@ -83,8 +87,18 @@ export default function UploadPage() {
   const handleFileSelect = (f: File) => {
     setFile(f);
     if (!title) {
-      // 파일 이름에서 확장자 제거하여 제목 자동 설정
       setTitle(f.name.replace(/\.[^/.]+$/, ""));
+    }
+  };
+
+  const handleRecordingComplete = (f: File) => {
+    setFile(f);
+    if (!title) {
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      setTitle(
+        `녹음 ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      );
     }
   };
 
@@ -148,7 +162,7 @@ export default function UploadPage() {
                 />
               </svg>
             </Link>
-            <h1 className="text-white font-semibold">음성 파일 업로드</h1>
+            <h1 className="text-white font-semibold">음성 업로드</h1>
           </div>
         </div>
       </nav>
@@ -214,7 +228,43 @@ export default function UploadPage() {
         ) : (
           /* 업로드 폼 */
           <form onSubmit={handleUpload} className="space-y-6">
-            <FileUploader onFileSelect={handleFileSelect} />
+            {/* 입력 방식 탭 */}
+            <div className="flex gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setActiveTab("file")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition ${
+                  activeTab === "file"
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-400 hover:text-gray-300"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                </svg>
+                파일 업로드
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("record")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition ${
+                  activeTab === "record"
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-400 hover:text-gray-300"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+                </svg>
+                녹음
+              </button>
+            </div>
+
+            {activeTab === "file" ? (
+              <FileUploader onFileSelect={handleFileSelect} />
+            ) : (
+              <AudioRecorder onRecordingComplete={handleRecordingComplete} />
+            )}
 
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
               <div>
