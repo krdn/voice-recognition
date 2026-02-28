@@ -10,6 +10,7 @@ from app.api.routes.chat import router as chat_router
 from app.api.routes.notes import router as notes_router
 from app.api.routes.projects import router as projects_router
 from app.api.routes.search import router as search_router
+from app.api.routes.service import router as service_router
 from app.api.routes.ws import router as ws_router
 from app.core.database import engine
 
@@ -39,6 +40,7 @@ app.include_router(projects_router)
 app.include_router(notes_router)
 app.include_router(chat_router)
 app.include_router(search_router)
+app.include_router(service_router)
 app.include_router(ws_router)
 
 

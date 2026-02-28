@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24  # 24시간
     upload_dir: str = "./uploads"
     max_upload_size_mb: int = 500
+    service_api_key: str = ""
 
     model_config = {"env_file": ".env"}
 
