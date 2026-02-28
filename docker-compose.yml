@@ -92,8 +92,7 @@ services:
     ports:
       - "3200:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://voice-api:8000
-      NEXT_PUBLIC_WS_URL: ws://voice-api:8000
+      INTERNAL_API_URL: http://voice-api:8000
     depends_on:
       - voice-api
 

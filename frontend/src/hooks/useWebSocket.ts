@@ -22,9 +22,10 @@ export function useWebSocket({ noteId, enabled = true }: UseWebSocketOptions) {
   const connect = useCallback(() => {
     if (!noteId || !enabled) return;
 
-    const WS_URL =
-      process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8200";
-    const ws = new WebSocket(`${WS_URL}/ws/notes/${noteId}/status`);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host = window.location.hostname;
+    const port = process.env.NEXT_PUBLIC_API_PORT || "8200";
+    const ws = new WebSocket(`${protocol}//${host}:${port}/ws/notes/${noteId}/status`);
 
     ws.onopen = () => setIsConnected(true);
 

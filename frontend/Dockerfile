@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN corepack enable && pnpm install --frozen-lockfile
 COPY . .
+ARG NEXT_PUBLIC_API_PORT=8200
+ENV NEXT_PUBLIC_API_PORT=${NEXT_PUBLIC_API_PORT}
 RUN pnpm build
 
 FROM node:22-alpine
