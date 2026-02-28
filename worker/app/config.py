@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     whisper_model: str = "medium"
     whisper_compute_type: str = "float16"
     whisper_batch_size: int = 8
-    ollama_model: str = "llama3.2"
+    ollama_model: str = "llama3.2:3b"
 
     model_config = {"env_file": ".env"}
 
