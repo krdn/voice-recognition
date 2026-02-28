@@ -24,6 +24,9 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedNoteId, setUploadedNoteId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   const { status, progress } = useWebSocket({
     noteId: uploadedNoteId,
@@ -34,11 +37,33 @@ export default function UploadPage() {
     try {
       const { data } = await api.get("/api/projects");
       setProjects(data);
-      if (data.length > 0) setSelectedProject(data[0].id);
+      if (data.length > 0) {
+        setSelectedProject(data[0].id);
+      } else {
+        setShowNewProject(true);
+      }
     } catch {
       /* 무시 */
     }
   }, []);
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return;
+    setIsCreatingProject(true);
+    try {
+      const { data } = await api.post("/api/projects", {
+        name: newProjectName.trim(),
+      });
+      setProjects((prev) => [...prev, data]);
+      setSelectedProject(data.id);
+      setNewProjectName("");
+      setShowNewProject(false);
+    } catch {
+      setError("프로젝트 생성에 실패했습니다.");
+    } finally {
+      setIsCreatingProject(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) {
@@ -207,19 +232,60 @@ export default function UploadPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   프로젝트
                 </label>
-                <select
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                >
-                  <option value="">프로젝트 선택</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                {showNewProject ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newProjectName}
+                      onChange={(e) => setNewProjectName(e.target.value)}
+                      placeholder="새 프로젝트 이름"
+                      className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateProject}
+                      disabled={!newProjectName.trim() || isCreatingProject}
+                      className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                    >
+                      {isCreatingProject ? "..." : "만들기"}
+                    </button>
+                    {projects.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowNewProject(false)}
+                        className="px-3 py-2.5 text-gray-400 hover:text-white transition"
+                      >
+                        취소
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedProject}
+                      onChange={(e) => setSelectedProject(e.target.value)}
+                      required
+                      className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    >
+                      <option value="">프로젝트 선택</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewProject(true)}
+                      className="px-3 py-2.5 text-gray-400 hover:text-blue-400 transition"
+                      title="새 프로젝트"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
