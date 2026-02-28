@@ -98,10 +98,13 @@ export default function UploadPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("project_id", selectedProject);
-      formData.append("title", title.trim());
 
-      const { data } = await api.post("/api/notes/upload", formData, {
+      const params = new URLSearchParams({
+        project_id: selectedProject,
+        title: title.trim(),
+      });
+
+      const { data } = await api.post(`/api/notes/upload?${params}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
