@@ -23,9 +23,7 @@ export function useWebSocket({ noteId, enabled = true }: UseWebSocketOptions) {
     if (!noteId || !enabled) return;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = window.location.hostname;
-    const port = process.env.NEXT_PUBLIC_API_PORT || "8200";
-    const ws = new WebSocket(`${protocol}//${host}:${port}/ws/notes/${noteId}/status`);
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/notes/${noteId}/status`);
 
     ws.onopen = () => setIsConnected(true);
 

@@ -107,8 +107,7 @@ export default function NoteDetailPage() {
     );
   }
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200";
-  const audioUrl = `${API_URL}/uploads/${note.file_path?.split("/").pop() || ""}`;
+  const audioUrl = `/uploads/${note.file_path?.split("/").pop() || ""}`;
 
   return (
     <div className="min-h-screen flex flex-col">
