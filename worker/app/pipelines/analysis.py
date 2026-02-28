@@ -11,14 +11,16 @@ logger = logging.getLogger(__name__)
 
 async def analyze_transcript(full_text: str, language: str = "ko") -> dict:
     """Ollama LLM으로 텍스트 요약, 키워드 추출, 액션 아이템 추출"""
-    prompt = f"""다음 음성 녹음 텍스트를 분석해주세요.
+    prompt = f"""당신은 한국어 텍스트 분석 전문가입니다. 반드시 한국어로만 응답하세요.
+
+다음 음성 녹음 텍스트를 분석해주세요.
 
 [텍스트]
 {full_text[:6000]}
 
-아래 JSON 형식으로만 응답해주세요 (다른 텍스트 없이):
+아래 JSON 형식으로만 응답해주세요 (다른 텍스트 없이, 모든 값은 한국어로 작성):
 {{
-    "summary": "전체 내용을 3-5문장으로 요약",
+    "summary": "전체 내용을 3-5문장으로 한국어 요약",
     "topics": ["주요 주제1", "주요 주제2", "주요 주제3"],
     "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
     "action_items": [
