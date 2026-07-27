@@ -16,6 +16,21 @@ logger = logging.getLogger(__name__)
 
 QUEUE_NAME = "voice:jobs"
 
+# blpop 은 서버가 이 시간만큼 블록한 뒤 nil 을 돌려준다.
+BLPOP_TIMEOUT_SEC = 5
+# ⚠️ socket_timeout 은 반드시 BLPOP_TIMEOUT_SEC 보다 커야 한다.
+#
+# redis-py 8.0.1 은 socket_timeout 이 None 이어도 블로킹 명령의 타임아웃을 소켓 읽기
+# 마감으로 쓴다. 그러면 서버가 nil 을 돌려주는 순간과 클라이언트의 마감이 정확히 겹쳐
+# 매번 클라이언트가 먼저 끊고 TimeoutError 를 던진다. 큐가 비어 있는 한 100% 재현되며
+# 그때마다 워커가 죽어 재시작 루프가 된다 (운영에서 RestartCount 1027 관측).
+#
+# 같은 이미지·같은 네트워크 실측:
+#   기본(socket_timeout 미지정) → 5.01초에 TimeoutError
+#   socket_timeout=6            → 정상 (5.03초에 None 반환)
+#   socket_timeout=10           → 정상
+SOCKET_TIMEOUT_SEC = BLPOP_TIMEOUT_SEC + 5
+
 
 async def publish_status(r: redis.Redis, note_id: str, status: str, progress: int = 0):
     """Redis PubSub으로 진행 상태 발행"""
@@ -117,11 +132,16 @@ async def process_job(r: redis.Redis, job_data: dict):
 async def main():
     """AI 워커 메인 루프: Redis 큐에서 작업을 꺼내 처리"""
     logger.info("AI 워커 시작...")
-    r = redis.from_url(settings.redis_url, decode_responses=True)
+    r = redis.from_url(
+        settings.redis_url,
+        decode_responses=True,
+        socket_timeout=SOCKET_TIMEOUT_SEC,
+    )
 
     while True:
-        # 블로킹 팝 (5초 타임아웃)
-        result = await r.blpop(QUEUE_NAME, timeout=5)
+        # 블로킹 팝 — 타임아웃은 상수로 묶는다. 여기 숫자를 바꾸면 socket_timeout 과의
+        # 관계가 깨져 위 주석의 재시작 루프가 그대로 재현된다.
+        result = await r.blpop(QUEUE_NAME, timeout=BLPOP_TIMEOUT_SEC)
         if result:
             _, job_json = result
             job_data = json.loads(job_json)
